@@ -13,4 +13,4 @@ strategy.py – Defines training strategies for different modes of tree construc
 
 Examples of runs can be found in the folder above. 
 
-Visualization of the DDF's trees can be found in the folder above. 
+Visualization of the DDF is still in process, but current implementation can be found in Visualization. The idea is that by generating optimal decision trees from the package PYDL8.5, you can then compare an optimal single tree to the model that DDF actually learns. Theoretically speaking, by using hierarchical features DDF should converge to capture the present redundant subtrees from the optimal single tree in the higher layers of the DDF model. 

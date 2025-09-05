@@ -18,97 +18,11 @@ from sklearn.datasets import load_wine
 #from modify_data import print_train_score
 from sklearn.datasets import load_digits
 
-#data = pd.read_csv('Datasets/mushroomfinal.csv')
-
 start = datetime.now()
 print("Start_time: ", start)
-
-'''wine_quality = fetch_ucirepo(id=186)
-
-X = wine_quality.data.features
-y = wine_quality.data.targets'''
-
-'''heart = fetch_ucirepo(id=45)
-X = heart.data.features.copy()
-y = heart.data.targets.copy()
-
-# Coerce to numeric (turns '?' etc. into NaN)
-X = X.apply(pd.to_numeric, errors='coerce')
-y = y.apply(pd.to_numeric, errors='coerce')
-
-# Drop rows with any NaN across features or target
-df = pd.concat([X, y], axis=1).dropna().reset_index(drop=True)
-
-# Binarize target if it's 0..4 ("num"); keep as-is if already 0/1
-target_col = y.columns[0]
-if df[target_col].nunique() > 2 or df[target_col].max() > 1:
-    df[target_col] = (df[target_col] > 0).astype(int)
-else:
-    df[target_col] = df[target_col].astype(int)
-
-# --- OPTIONAL: min–max scale FEATURES (not the label) ---
-X_np = df.drop(columns=[target_col]).to_numpy(dtype=np.float64)
-X_min = X_np.min(axis=0)
-X_max = X_np.max(axis=0)
-den = np.where((X_max - X_min) == 0, 1.0, (X_max - X_min))
-X_np = (X_np - X_min) / den
-# --------------------------------------------------------
-
-y_np = df[target_col].to_numpy(dtype=np.int64)
-
-# Your format: features first, label last
-data = np.hstack([X_np, y_np.reshape(-1, 1)])
-np.random.shuffle(data)'''
-
-
-#data = pd.read_csv('C:\\Users\\hugos\\OneDrive\\Dokument\\Final_Thesis\\Examensarbete\\Datasets\\multiclasssyntheticredundancy6 (1).csv')
-
-#data = pd.read_csv('Datasets/SynthDatasets/test.csv')
-#data = np.array(data)
-#np.random.shuffle(data)
-
-#data = load_breast_cancer()
-#data = load_wine()
-#X = pd.DataFrame(data.data, columns=data.feature_names)
-#y = pd.Series(data.target, name="target")
-#y = (y-y.min())/(y.max()-y.min())
-#data = pd.read_csv('C:\\Users\\David\\PycharmProjects\\Examensarbete\\Datasets\\kr-vs-kp.data', header=None)
-#data = pd.read_csv(r'C:\Users\David\PycharmProjects\Examensarbete\Datasets\kr-vs-kp.data', header=None)
-
-
-#X = pd.DataFrame(data.data, columns=data.feature_names)
-#y = pd.Series(data.target, name="target")
-
-
-
-#d = load_digits()
-#X, y = d.data, d.target
-#y = (y-y.min())/(y.max()-y.min())
-#data = np.column_stack([X, y])
-#rng = np.random.default_rng(42)
-#rng.shuffle(data, axis=0)
-#data = np.hstack((X.values, y.values.reshape(-1, 1)))
-#np.random.shuffle(data)
-
-#df = pd.read_csv(r'C:\Users\hugos\OneDrive\Dokument\Final_Thesis\Examensarbete\Datasets\chess+king+rook+vs+king+pawn\kr-vs-kp.data', header=None)
-#df = pd.read_csv(r'C:\Users\hugos\OneDrive\Dokument\Final_Thesis\Examensarbete\Datasets\tic+tac+toe+endgame\tic-tac-toe.data', header=None)#
-'''label_encoders = []
-for col in df.columns:
-    le = LabelEncoder()
-    df[col] = le.fit_transform(df[col])
-    label_encoders.append(le)
-
-# Shuffle
-df = df.sample(frac=1).reset_index(drop=True)
-
-# Convert to NumPy
-data = df.to_numpy()'''
-#os.environ["SKLEARN_DATA"] = "C:/Users/David/PycharmProjects/Examensarbete/sklearn_data"
 ms = fetch_openml('mushroom', version=1, as_frame=True)
-X = pd.get_dummies(ms.data.replace('?', np.nan)).fillna(0)  # simple encode
-y = (ms.target == 'p').astype(int)                          # poisonous=1
-
-# stratified 2,000 subset
+X = pd.get_dummies(ms.data.replace('?', np.nan)).fillna(0) 
+y = (ms.target == 'p').astype(int)                        
 from sklearn.model_selection import StratifiedShuffleSplit
 sss = StratifiedShuffleSplit(n_splits=1, test_size=len(X)-2000, random_state=42)
 keep_idx, _ = next(sss.split(X, y))
@@ -120,50 +34,11 @@ np.random.shuffle(data)
 train_t, test = modify_data.train_test_split(data, 0.7)
 train_t, val = modify_data.train_test_split(train_t, 0.8)
 
-#rng = np.random.RandomState(0)
 
 train = train_t.copy()
 
-#train[:,-1] = rng.permutation(train[:,-1])
-
 possible_classes = np.unique(train[:,-1])
-'''
-#print(data[0])
 
-#digits = load_digits()
-#X = digits.data
-#y = digits.target
-
-#data = np.hstack((X, y.reshape(-1, 1)))
-#np.random.shuffle(data)
-#train, test = modify_data.train_test_split(data, 0.7)
-'''
-
-#my_data_folder = os.path.join(os.getcwd(), "my_openml_data")
-#letter = fetch_openml('letter', version=1, as_frame=False)
-#X = mnist['data']               # shape (70000, 784)
-#y = mnist['target'].astype(int) # labels as int
-#X = letter.data  # Shape: (20000, 16)
-#y = letter.target  # Labels: 'A'-'Z' (strings)
-
-
-#y = np.array([ord(char) - ord('A') for char in y])
-
-#mnist = fetch_openml('mnist_784', version=1, as_frame=False)
-#X = mnist['data']               # shape (70000, 784)
-# = mnist['target'].astype(int) # labels as int
-
-# Optional: reduce dataset size for faster testing
-#X = X[:10000]
-#y = y[:10000]
-
-# Combine into your format
-#data = np.hstack((X, y.reshape(-1, 1)))
-#np.random.shuffle(data)
-
-# Split train/test
-#train, test = modify_data.train_test_split(data, 0.7)
-#Code for mutliple trees
 unique, counts = np.unique(data[:, -1], return_counts=True)
 train_unique, train_count = np.unique(train[:, -1], return_counts=True)
 test_unique, test_count = np.unique(test[:, -1], return_counts=True)
@@ -189,8 +64,6 @@ NoT_Multiplier = 1.5
 K = 5
 use_weights = False
 
-#best so far weighted 40 trees 40 chosen features depth 100 number 2
-#interesting runs 50 trees 50 features not weighted depth 100 number 1
 
 NoT = 60
 epochs = 10
@@ -219,29 +92,17 @@ for i in range(NoT):
 L1_data_holder = np.array(L1_data_holder)
 
 print("passed layer 1")
-
-#print("prediction shapes: ", np.shape(temp_preds))
-#print("training shapes: ", np.shape(temp))
-#print("Mean accuracy layer 1 (pre retrain): ", layer1_acc.mean())
-#print(layer1[0].base.left.left.parent.parent.information_gain == layer1[0].base.information_gain == layer1[0].base.right.parent.information_gain)
-#print(layer1[0].base.parent)
 L1_preds = np.array(L1_preds)
 L1_data_holder = np.array(L1_data_holder.transpose())
 new_data = modify_data.concat(L1_data_holder, train[:,-1])
 #print("Data after changes: ", new_data)
 new_preds = modify_data.concat(L1_preds.transpose(), test[:,-1])
 
-#print("shape of new data: ", new_data.shape, "\n")
-#print("shape of new preds: ", new_preds.shape, "\n")
-
 print("total Data: ", np.sum(new_data[:,-1]==True))
 layer2 = []
 layer2_train_preds = []
 layer2_test_preds = []
-subset_size = int(0.6 * len(new_data))  # 80% subsampling of dataset size
-#print("new_data", new_data.shape)
-#print("subset_size", subset_size)
-
+subset_size = int(0.6 * len(new_data)) 
 tree_subsets = []
 tree_indices = []
 for i in range(NoT):
@@ -294,17 +155,12 @@ if use_weights:
     MV_train = modify_data.Majority_voting_weighted(layer3_data, weights)
 else:
     MV_train = modify_data.Majority_voting(layer3_data)
-#print_train_score(MV_train, "(pretrain)")
-#print("Major vote shape: ", MV_train[:,1].shape)
 L3_train_accuracy = modify_data.score(MV_train[:,0], MV_train[:,1])
-#MV_test = modify_data.Majority_voting(layer2_test_preds)
-#L2_test_accuracy = layer2[0].score(MV_test[:,0], MV_test[:,1])
 
 print("Layer 3 training accuraccy pre retrain: ", L3_train_accuracy)
 
 accuracy = L3_train_accuracy
 
-#print("Layer 2 validation accuracy pre retraining: ", L2_test_accuracy)
 
 Data_sets = [train, new_data, layer2_train_preds, layer3_data]
 Layers = [layer1, layer2, layer3]
@@ -326,8 +182,6 @@ summed_differences = modify_data.all_layer_structure_differences(Layers)
 
 for diff in summed_differences:
     average_differences.append([diff])
-
-#print("Layer average differences:", summed_differences)
 
 preds_prev_iter = None
 
@@ -683,4 +537,5 @@ for i in range(epochs):
 end = datetime.now()
 print("End Time: ", end)
 print(f"Duration: {end - start}")
+
 print("Final done")

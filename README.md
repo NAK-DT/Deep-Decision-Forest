@@ -10,6 +10,16 @@ The table below shows average accuracy ± standard deviation across several data
 
 In many real-world datasets, redundant features are unavoidable. Different variables may encode overlapping information (e.g., correlated medical indicators, or duplicated categorical encodings). While redundancy is not inherently harmful, it often leads to inefficiencies in traditional ensemble models. This creates a risk where models appear complex but contribute little new information beyond what a smaller subset of features already provides.
 
+To better capture this phenomenon, we define a Redundancy Score that quantifies overlap in a dataset by combining two complementary measures:
+
+**Redundancy Score** = 0.5 × Correlation Score + 0.5 × PCA Score
+
+Correlation Score measures pairwise dependencies between features (e.g., Pearson correlation).
+
+PCA Score measures how much variance can be explained by a reduced set of principal components, reflecting global redundancy.
+
+This combined metric allows us to categorize datasets into Low, Moderate, or High redundancy regimes.
+
 DDF addresses this challenge by incorporating retraining strategies that encourage trees across layers to learn complementary, hierarchical patterns instead of reusing the same redundant splits. By refining feature selection at each layer, DDF aims to exploit dataset structure more effectively, particularly in redundancy-heavy domains.
 
 Across these datasets, DDF performs competitively with or better than standard ensembles. The advantage becomes clearer on tasks such as Raisin, Heart Disease, and Iris, where redundancy between features can cause Random Forests and Deep Forests to produce overlapping splits. By contrast, DDF’s retraining strategies help reduce subtree repetition, enabling better exploitation of hierarchical feature interactions.

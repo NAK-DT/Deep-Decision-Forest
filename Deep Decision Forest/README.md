@@ -10,3 +10,7 @@ modify_data.py – Provides data preprocessing and transformation utilities. Inc
 redundancycheck.py – Contains methods to quantify redundancy in datasets using correlation- and PCA-based metrics. Produces the final redundancy score that motivates the use of DDF in redundancy-heavy datasets.
 
 strategy.py – Defines training strategies for different modes of tree construction (e.g., random, greedy, or restricted). This allows experimenting with different decision rules inside the DDF architecture.
+
+Examples of runs can be found in the folder above. 
+
+Visualization of the DDF's trees can be found in the folder above. 

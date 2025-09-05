@@ -1,0 +1,7 @@
+include core/src/*.h
+include cython_extension/*.pyx
+include cython_extension/*.h
+exclude cython_extension/error_function.h
+exclude cython_extension/*.cpp
+include cython_extension/*.pxd
+include core/src/*.cpp

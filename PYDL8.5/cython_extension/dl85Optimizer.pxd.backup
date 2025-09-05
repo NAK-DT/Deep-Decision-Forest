@@ -1,0 +1,16 @@
+# cython_extension/dl85Optimizer.pxd
+
+from libcpp cimport bool
+from libcpp.stack cimport stack
+
+cdef extern from "../core/src/rCover.h":
+    cdef cppclass RCover:
+        cppclass iterator:
+            int wordOrder
+            int operator*()
+            iterator operator++()
+            bool operator==(iterator)
+            bool operator!=(iterator)
+        iterator begin(bool trans_loop)
+        iterator end(bool trans_loop)
+        stack[int] limit

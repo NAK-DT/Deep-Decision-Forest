@@ -1,1 +1,0 @@
-Documentation for Deep Forest by Zhou and Feng. Includes baseline models such as Decision Tree and Random Forest for benchmarking purposes.

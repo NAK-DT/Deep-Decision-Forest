@@ -1,6 +1,6 @@
 from collections import Counter
 from random import random
-import backpropagationShapley
+import backpropagation
 import Trees
 import Node
 import modify_data
@@ -59,7 +59,7 @@ def su_computation(split_nodes, numFeats, bias_indices = None, bias_classes = No
         final_indices = list(temp_indices_holder.keys())
         final_classes = [temp_class_holder[index] for index in final_indices]
 
-        summed_indices, summed_classes = backpropagationShapley.sum_classes(final_indices, final_classes)
+        summed_indices, summed_classes = backpropagation.sum_classes(final_indices, final_classes)
     else:
         summed_indices = None
         summed_classes = None
@@ -84,17 +84,12 @@ def su_computation(split_nodes, numFeats, bias_indices = None, bias_classes = No
             su_scoreList[feature][1] += depth
             su_scoreList[feature][2] += 1
 
-        #print("Feature: ", feature, " Depth: ", depth)
 
     for item in su_scoreList:
         if item is None:
             continue
         totalDepth_list.append([item[3], item[0] / item[1]])
         avgDepth_list.append([item[3], item[0] / (item[1] / item[2])])
-
-    #print("Total depth: ", totalDepth_list)
-    #print("average depth: ", avgDepth_list)
-    #print("Hello")
 
 
     return totalDepth_list, summed_indices, summed_classes, True
@@ -125,7 +120,7 @@ def Shapley_compute(Layer, Data, Bad_features, bias_indices = None, bias_classes
         final_indices = list(temp_indices_holder.keys())
         final_classes = [temp_class_holder[index] for index in final_indices]
 
-        summed_indices, summed_classes = backpropagationShapley.sum_classes(final_indices, final_classes)
+        summed_indices, summed_classes = backpropagation.sum_classes(final_indices, final_classes)
         Data = deepcopy(Data[summed_indices])
         bias_classes = summed_classes.copy()
     else:
@@ -151,15 +146,6 @@ def Shapley_compute(Layer, Data, Bad_features, bias_indices = None, bias_classes
 
     Data_copy = deepcopy(Data)
 
-    '''shapley_trees = []
-das
-    for j in range(len(Layer)):
-        temp_tree = Trees.DecisionTree()
-        subset_index = np.random.choice(len(Data_copy), subset_size, replace=True)
-        subset = Data[subset_index]
-
-        temp_tree.train(subset, subset_index)
-        shapley_trees.append(temp_tree)'''
 
     iterations = int(np.log(feature_size) * 50)
     n_classes = len(np.unique(Data[:, -1])) #amount of classes
@@ -168,7 +154,7 @@ das
 
         swapped_features = random.sample(range(feature_size), sub_features)
         not_swapped_features = set(range(feature_size)) - set(swapped_features)
-        random_features = backpropagationShapley(feature_size, samples, n_classes) #<-- added n_classes
+        random_features = backpropagation(feature_size, samples, n_classes) #<-- added n_classes
         Data_copy[:,swapped_features] = random_features[:,swapped_features].copy()
         shapley_preds = []
         for tree in Layer:
@@ -218,16 +204,6 @@ das
             feature_not_exist_accuracies.append(Feature_not_exist[i][0]/Feature_not_exist[i][1])
 
 
-    '''smallest_difference = 100
-
-    worst_feature = None
-
-    for i in range(feature_size):
-
-        if (abs(feature_exist_accuracies[i]-feature_not_exist_accuracies[i]) < smallest_difference) & ( i not in Bad_features):
-            smallest_difference = abs(feature_exist_accuracies[i]-feature_not_exist_accuracies[i])
-            worst_feature = i'''
-
     accuracy_differences = abs(np.array(feature_exist_accuracies)-np.array(feature_not_exist_accuracies))
 
     indexed_arr = [(i, v) for i, v in enumerate(accuracy_differences) if i not in Bad_features]
@@ -259,7 +235,7 @@ def average_node_depth(features, layer_nodes, bias_indices = None, bias_classes 
         final_indices = list(temp_indices_holder.keys())
         final_classes = [temp_class_holder[index] for index in final_indices]
 
-        summed_indices, summed_classes = backpropagationShapley.sum_classes(final_indices, final_classes)
+        summed_indices, summed_classes = backpropagation.sum_classes(final_indices, final_classes)
     else:
         summed_indices = None
         summed_classes = None
@@ -278,14 +254,6 @@ def average_node_depth(features, layer_nodes, bias_indices = None, bias_classes 
 
         indexed_arr.append((feat, summed_depth))
 
-    '''for index, feature_nodes in enumerate(layer_nodes):
-        summed_depth = 0
-        for split_node in feature_nodes:
-            summed_depth += split_node[1].depth
-
-        summed_depth = summed_depth/len(feature_nodes)
-
-        indexed_arr.append((features[index], summed_depth))'''
 
     return indexed_arr, summed_indices, summed_classes, False
 

@@ -13,7 +13,7 @@ def get_Biased_results(worst_data, compare_list, mid_layer_check = None):
     Biased_data = []
     Biased_classes = []
     i = 0
-    for tup in worst_data:
+    for tup in worst_data: #Compares the results of the original sample results with that of the "alternate path" to see if anyone has a correct prediction
         for item in compare_list:
             if tup[0] == item[0]:
                 if tup[1] != item[1]:
@@ -25,7 +25,7 @@ def get_Biased_results(worst_data, compare_list, mid_layer_check = None):
 
                         else:
                             Biased_data.append(tup[0])
-                            Biased_classes.append([tup[2], tup[3]]) #<----- ground truth label isntead of binary
+                            Biased_classes.append([tup[2], tup[3]])
                             break
                     else:
                         if item[1] == tup[-1][-1]:
@@ -35,7 +35,7 @@ def get_Biased_results(worst_data, compare_list, mid_layer_check = None):
 
                         elif tup[1] == tup[-1][-1]:
                             Biased_data.append(tup[0])
-                            Biased_classes.append([tup[2], tup[3]]) #<---- ground truth label
+                            Biased_classes.append([tup[2], tup[3]])
                             break
 
                         else:
@@ -85,7 +85,7 @@ def get_worst_data(Node, data, index, temp_list, side = None, Wanted_threshold =
 
         return temp_list
 
-def alternate_split(Node, data, index, temp_list, alt, side = None, Wanted_threshold = None, Threshold = None):
+def alternate_split(Node, data, index, temp_list, alt, side = None, Wanted_threshold = None, Threshold = None): #aquire the alternate split by changing which side of the node each sample is sent through
     if alt:
         Wanted_threshold = Threshold
         right_side = 'R'
@@ -101,7 +101,7 @@ def alternate_split(Node, data, index, temp_list, alt, side = None, Wanted_thres
             return temp_list
         else:
 
-            for datapoint in data:
+            for datapoint in data: #swaps the side of the samples by sending samples less than threshold to the right and the rest to the left
                 if datapoint[-1][Node.feature] < Threshold:
                     right_data.append(datapoint[-1])
                     right_index.append(datapoint[0])
@@ -116,7 +116,7 @@ def alternate_split(Node, data, index, temp_list, alt, side = None, Wanted_thres
             return temp_list
 
 
-    else:
+    else: #After the first node changes side continue on with normal prediction by sending samples less than the threshold to the left and the rest to the right
         if Node.value is not None:
             for i in range(len(index)):
                 temp_list.append([index[i], Node.value, side, Wanted_threshold])
@@ -138,10 +138,10 @@ def alternate_split(Node, data, index, temp_list, alt, side = None, Wanted_thres
             if len(right_index) > 0:
                 temp_list = alternate_split(Node.right, right_data, right_index, temp_list, False, side = side, Wanted_threshold = Wanted_threshold)
 
-            return temp_list
+            return temp_list #returns the alternate path predictions for all samples
 
 
-def acquire_split_nodes(node, Node_collection):
+def acquire_split_nodes(node, Node_collection): #aquire all the nodes that use the same feature as "node"
     if node.feature is not None:
         Node_collection.append(node)
 
@@ -156,7 +156,7 @@ def acquire_split_nodes(node, Node_collection):
 
     return Node_collection
 
-def sum_classes(data, classes):
+def sum_classes(data, classes): #Sum which class is the most common for each data sample across all nodes and set it as the "preferred class"
     ret_data = []
     ret_classes = []
     for i, sett in enumerate(classes):
@@ -169,7 +169,7 @@ def sum_classes(data, classes):
     return ret_data, ret_classes
 
 
-def sum_data(votes, thresholds, cap=None):
+def sum_data(votes, thresholds, cap=None): #sums the preferred threshold each sample would want to be within to be correctly predicted
 
     thresholds = sorted(thresholds)
     prev_below = {t: (None if i == 0 else thresholds[i-1]) for i, t in enumerate(thresholds)}
@@ -184,17 +184,17 @@ def sum_data(votes, thresholds, cap=None):
         l_vals_all = [t for (s, t) in pairs if s == 'L']
 
         # Both-sides bounds
-        min_R = min(r_vals_all) if r_vals_all else None   # tightest lower bound
-        max_L = max(l_vals_all) if l_vals_all else None   # tightest upper bound
+        min_R = min(r_vals_all) if r_vals_all else None   # Finds the smallest threshold a sample could have to be correctly identified when greater or equal to threshold
+        max_L = max(l_vals_all) if l_vals_all else None   # Finds the largest threshold a sample could have to be correctly identified when smaller than threshold
 
         # No signal
-        if min_R is None and max_L is None:
+        if min_R is None and max_L is None: #ignore samples without data
             continue
 
         # Both sides present
         if min_R is not None and max_L is not None:
             # conflict if bounds touch or cross
-            if min_R >= max_L:
+            if min_R >= max_L:#removes samples with conflicting data
                 continue
 
             target = min_R
@@ -205,13 +205,13 @@ def sum_data(votes, thresholds, cap=None):
             )
 
         # R-only: use the largest R
-        elif min_R is not None:
+        elif min_R is not None: #Samples only correctly predicted when equal or greater than threshold are assigned the largest recorded threshold value
             largest_R = max(r_vals_all)
             target = largest_R
             weight = len(r_vals_all)
 
         # L-only: use the smallest L, then map to previous threshold (or 0.0)
-        else:
+        else: #Samples only correctly predicted when lesser than the threshold is assigned the smallest recorded threshold value
             smallest_L = min(l_vals_all)
             below = prev_below.get(smallest_L)
             target = 0.0 if below is None else below
@@ -222,7 +222,7 @@ def sum_data(votes, thresholds, cap=None):
         if weight <= 0:
             continue
 
-        out_idx.extend([idx] * int((weight/len(thresholds))))
+        out_idx.extend([idx] * int((weight/len(thresholds)))) #Weighs the number of each sample to remove duplicates
         out_targ.extend([target] * int((weight/len(thresholds))))
 
     return out_idx, out_targ
@@ -334,7 +334,7 @@ def find_best_improvement_single(
                 retrain_classes = []
                 break
 
-        # if we didn’t assemble *both* indices and classes, retry
+        # if there are no indices for retraining redo the step
         if not (retrain_indices and retrain_classes):
             retrain_indices = []
             retrain_classes = []
@@ -375,7 +375,7 @@ def find_best_improvement_propagate(
     include_random_trees, distribution, number_of_features, featu,
     maximum_tries, worst_tree, number_threshs, possible_classes, L3_sub_inds,
     Extra_indices=None, Retrain_datasets=None, old_indices=None, old_classes=None
-):
+): #Same as find_best_improvement_single but propagates through all layers
     from collections import defaultdict
     import heapq
     from copy import deepcopy
@@ -514,7 +514,7 @@ def find_best_improvement_propagate(
                     pass
 
             # ----- descend or train
-            if depth == 2:
+            if depth == 2: #If the model has reached the final layer to evaluate start retraining
                 layers, layer_data, pot_acc, feats, accepted_count, accepted_slots, propagate_L3_inds, propagate_weights = train_propagate(
                     Layers, feat_holder, Data[0], Data[1:],
                     indices_holder, class_holder,
@@ -522,7 +522,7 @@ def find_best_improvement_propagate(
                     worst_tree, Retrain_datasets, Extra_indices, L3_sub_inds
                 )
                 new_layers = deepcopy(layers)
-            else:
+            else: # Otherwise go to next layer
                 layers, layer_data, pot_acc, feats, accepted_count, accepted_slots, propagate_L3_inds, propagate_weights = find_best_improvement_propagate(
                     Layers, Data, current_acc, depth - 1,
                     feat_holder, indices_holder, class_holder,
@@ -534,12 +534,9 @@ def find_best_improvement_propagate(
 
             # ----- keep best
             if pot_acc - current_acc >= best_improvement:
-                feature_split_Nodes, Existing_features = sortSplitNode(new_layers, depth, featu)
-                Layers_Nodes = featCount(worst_features, feature_split_Nodes, depth)
 
                 best_layers      = layers
                 best_layers_data = layer_data
-                best_improvement = pot_acc - current_acc
                 best_accuracy    = pot_acc
                 best_feats       = deepcopy(feats)
                 print("found improvement shap prop: ", best_feats)
@@ -562,14 +559,14 @@ def find_best_improvement_propagate(
     return best_layers, best_layers_data, best_accuracy, best_feats, accepted_count, accepted_slots, propagate_L3_inds, propagate_weights
 
 
-def sortSplitNode(Layers, depth, featu=None):
+def sortSplitNode(Layers, depth, featu=None): #Sort the nodes in one layer by feature used when splitting
     if featu is None:
         featu = []
 
     feature_split_Nodes = []
     Existing_features = []
 
-    feature_set = set(Existing_features)  # Use a set for faster lookups
+    feature_set = set(Existing_features)
 
     for treedex, tree in enumerate(Layers[depth - 1]):
         temp_node_collection = acquire_split_nodes(tree.base, [])
@@ -598,13 +595,12 @@ def featCount(worst_features, feature_split_Nodes, depth):
         feature_count.append([feat, pres_counter])
 
         Layers_Nodes.append(temp_nodes)
-    '''for item in feature_count:
-        print(f"Feature {item[0]} was present in {item[1]} trees at depth {depth}.")'''
+
     return Layers_Nodes
 
 
 
-
+# Tree retraining for all layers
 def train_propagate(Old_Layers, feature, Data, Change_data, biased_data, biased_classes,
                     include_random_trees, distribution, worst_tree, Retraining_datasets, retraining_indices, L3_sub_inds, use_weights = True):
 
@@ -619,7 +615,7 @@ def train_propagate(Old_Layers, feature, Data, Change_data, biased_data, biased_
     pot_layer1 = Old_Layers[0].copy()
     Layer1_data_copy = deepcopy(Change_data[0])
 
-    for i in range(len(OG_features)):
+    for i in range(len(OG_features)): #Retrain worst trees in layer 1
         pot_layer1_tree = Trees.DecisionTree()
         pot_layer1_tree.train(Data, False, None, OG_indices[i], OG_classes[i])
         pot_layer1_trainpreds = pot_layer1_tree.sum_predictions(Data, True)
@@ -631,8 +627,8 @@ def train_propagate(Old_Layers, feature, Data, Change_data, biased_data, biased_
     layers = [pot_layer1]
     ret_data = [Layer1_data_copy]
 
-    # ----- L2 update (propagated) -----
-    for i in range(1, len(Old_Layers) - 1):
+    # ----- L2 - n-1 (propagated) -----
+    for i in range(1, len(Old_Layers) - 1): #retrains the worst trees in layers 2 through n-1 if configured for more than 3 layers
         layer_holder = Old_Layers[i].copy()
         layer_data   = Change_data[i].copy()
 
@@ -676,7 +672,7 @@ def train_propagate(Old_Layers, feature, Data, Change_data, biased_data, biased_
 
     # stratified K splits
     val_splits = []
-    for _ in range(K):
+    for _ in range(K): #records the accuracy of the current final layer
         val_idx_list = []
         trn_idx_list = []
         for cls in np.unique(y_true_all):
@@ -697,7 +693,7 @@ def train_propagate(Old_Layers, feature, Data, Change_data, biased_data, biased_
             "y_val": y_val
         })
     # --- BASELINES ---
-    if use_weights:
+    if use_weights: #Sets a baseline accuracy before retraining
         base_weights = modify_data.compute_oob_weights(pot_final_layer, L3_sub_inds, prev_data_arr)  # len=T
         base_weights_ext = np.append(base_weights, 0.0)  # pad for label col
         base_scores = []
@@ -713,7 +709,7 @@ def train_propagate(Old_Layers, feature, Data, Change_data, biased_data, biased_
 
 
 
-        #---- iterate only the requested L3 slots
+        #Iterate over the worst performing trees in the final layer and retrain them
     for slot in worst_tree[-1] if isinstance(worst_tree, list) and isinstance(worst_tree[-1],
                                                                               (list, np.ndarray)) else worst_tree:
         best_mean_delta = float('-inf')
@@ -726,11 +722,11 @@ def train_propagate(Old_Layers, feature, Data, Change_data, biased_data, biased_
         BAG_FRAC = 0.63
         EPS = 0  # allow tiny no-worse changes
 
-        for _ in range(M_CANDIDATES):
+        for _ in range(M_CANDIDATES): #Train a set number of trees for each slot to increase chances of building a better tree
             # (A) rotate which split we source training indices from to increase diversity
             if _ >= M_CANDIDATES:
                 BAG_FRAC = 0.63
-            split_idx = np.random.randint(len(val_splits))
+            split_idx = np.random.randint(len(val_splits)) #Creates a random unique train set for tree training
             trn_pool = val_splits[split_idx]["trn_idx"]
             bag_sz = max(1, int(len(trn_pool) * BAG_FRAC))
             if _ >= M_CANDIDATES:
@@ -748,7 +744,7 @@ def train_propagate(Old_Layers, feature, Data, Change_data, biased_data, biased_
 
             # (B) score on ALL splits
             deltas, improved = [], 0
-            if use_weights:
+            if use_weights: #Check new tree performance
                 # candidate weights: recompute for the “candidate-at-slot” ensemble
                 tmp_layer = list(pot_final_layer)
                 tmp_layer[slot] = cand
@@ -781,7 +777,7 @@ def train_propagate(Old_Layers, feature, Data, Change_data, biased_data, biased_
 
             mean_delta = float(np.mean(deltas))
 
-            # keep the most promising even if gains are tiny
+            # keep the most promising trees
             if (improved >= 3 and mean_delta >= -EPS) and (mean_delta > best_mean_delta + 1e-6):
                 best_mean_delta = mean_delta
                 best_tree = cand
@@ -825,7 +821,7 @@ def train_propagate(Old_Layers, feature, Data, Change_data, biased_data, biased_
 
     return layers, ret_data, pot_acc, feature, accepted_count, accepted_slots, L3_sub_inds, final_weights
 
-
+#The same sort of training as train_propagate, but only for the last two layers
 def train_single(Layers, feature_set, Data, Change_data, include_random_trees, biased_data, biased_classes, distribution, worst_tree, L3_sub_inds, use_weights = True):
     pot_prev_layer = Layers[0].copy()
     prev_layer_data_copy = deepcopy(Change_data[0])

@@ -15,11 +15,10 @@ def train_test_split(data, cut): #Splits the dataset into two separate sets base
 
 def concat(data, true): #adds a column vector onto the end of a matrix
     true = true.reshape(-1,1) #reshape the data to be added to ensure it can be used with hstack
-    #print("data shape: ", data.shape, " ground truth shape: ", true.shape)
     ret = data[0] #recreate the data through vstack to make sure everything works correctly (might be redundant)
     for i in range(1,len(data)):
         ret = np.vstack((ret, data[i]))
-    return np.hstack((ret, true)) #add the new column at the end before returning
+    return np.hstack((ret, true)) #add the truth label column at the end before returning
 
 def get_results(Node, array, index_array): #Creates an output for next layer
     if Node.value is None: #if the current node is not a leaf node then iterate through the tree until one is found
@@ -37,8 +36,6 @@ def get_results(Node, array, index_array): #Creates an output for next layer
 
 def rearange_data(data, index): #rearanges the data from each tree in a layer to make sure the same predicted datapoints from each tree are in the same row
     correct_order = True
-    #print("index shape: ", index[0].shape)
-    #print(index[0], "     ", index[1], "     ", index[2], "     ", index[3])
     for i in range(1, len(index)):#Check if the columns are correctly ordered
         if np.any(index[0] != index[i]):
             #print("Index mismatch")
@@ -61,19 +58,14 @@ def rearange_data(data, index): #rearanges the data from each tree in a layer to
     sorted_data = temp[sorting_index][correct_position]
     sorted_index = sorted_temp_index[correct_position]
 
-    #print(" template index: ", template_index)
     rearranged_data = sorted_data #put rearranged data as the data from the first column
     rearranged_index = sorted_index
-    #print("rearranged data: ", rearranged_data)
     rearranged_data = rearranged_data.reshape(-1,1) #make sure the rearranged arrays can be modified with hstack
     rearranged_index = rearranged_index.reshape(-1,1)
     for i in range(1, len(index)): #go through every column
         if np.any(template_index != index[i]): #if the current column does not match the template it will be rearranged
             temp_data = data[i] #create temporary variables to hold the data to be rearranged
             temp_index = index[i]
-            #print("temp_data shape: ", temp_data.shape)
-            #sorted_data = temp_data[template_index].reshape(-1,1)
-            #sorted_index = temp_index[template_index].reshape(-1,1)
 
             sorting_indices = np.argsort(temp_index)  # Get positions of sorted indices
             sorted_temp_index = temp_index[sorting_indices]  # Reorder indices
@@ -85,17 +77,12 @@ def rearange_data(data, index): #rearanges the data from each tree in a layer to
             sorted_data = temp_data[sorting_indices][correct_positions].reshape(-1, 1)
             sorted_index = sorted_temp_index[correct_positions].reshape(-1, 1)
 
-
-            #print("Before hstack: ", sorted_data.shape, "    ", rearranged_data.shape)
             rearranged_data = np.hstack((rearranged_data, sorted_data)) #add the rearranged column to the total data
             rearranged_index = np.hstack((rearranged_index, sorted_index))
-            #print("After hstack: ", sorted_data.shape, "    ", rearranged_data.shape)
         else:#if the columns is correctly sorted then they will just be added to the data
             rearranged_data = np.hstack((rearranged_data, data[i].reshape(-1, 1)))
             rearranged_index = np.hstack((rearranged_index, index[i].reshape(-1, 1)))
 
-    #print("Shape of rearranged index: ", rearranged_index.shape)
-    #print(rearranged_index[:,0], "     ", rearranged_index[:,1], "     ", rearranged_index[:,2], "     ", rearranged_index[:,3])
 
     return rearranged_data, template_index, rearranged_index
 
@@ -116,32 +103,9 @@ def Majority_voting(Data):
 def score(y_pred, y_true, tol=1e-6):
     y_pred = np.asarray(y_pred, dtype=np.float64)
     y_true = np.asarray(y_true, dtype=np.float64)
-    '''for i in range(len(y_pred)):
-         print("sample:", i, "result:", np.isclose(y_pred[i], y_true[i], atol=tol), "y pred:", y_pred[i], "y true:", y_true[i])'''
+
     return float(np.isclose(y_pred, y_true, atol=tol).mean())
 
-
-'''def test_predict(Layers, data, weights, use_weights = False):
-
-    prev_data = deepcopy(data)
-
-    for layer in Layers:
-        Layer_preds = []
-        for tree in layer:
-            preds = tree.sum_predictions(prev_data, False)
-            Layer_preds.append(preds)
-
-        Layer_preds.append(prev_data[:,-1])
-        Layer_preds = np.array(Layer_preds).transpose()
-        prev_data = deepcopy(Layer_preds)
-    if use_weights:
-        MV_test = Majority_voting_weighted(prev_data, weights)
-    else:
-        MV_test = Majority_voting(prev_data)
-    test_score = score(MV_test[:,0], MV_test[:,1])
-    print_test_score(MV_test)
-
-    return test_score'''
 
 def test_predict(Layers, data, weights=None, weighted=True):
     y = data[:, -1].copy()

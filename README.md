@@ -3,8 +3,19 @@ Deep-Decision-Forest (DDF) is a custom ensemble tree model that takes inspiratio
 
 The model introduces layered training and retraining strategies, allowing decision trees to progressively refine their learned representations, similar to how deep neural networks refine features across layers. Instead of gradient-based backpropagation, DDF leverages tree retraining guided by feature importance. 
 
-
 DDF has been evaluated against classical models (Decision Tree, Random Forest) and Deep Forest variants.
+
+The following parameters were used for the models, obtained through grid search hyperparameter tuning:
+
+Decision Tree was implemented using DecisionTreeClassifier from scikit-learn, with maximum depth of 30, minimum samples per split 10 and minimum impurity decrease $5 \times 10^{-3}$. 
+
+Random Forest was implemented using RandomForestClassifier from scikit-learn, with 60 trees and each tree parametrised as above.
+
+Deep Forest, as proposed in Deep Forest (Zhou & Feng), uses the CascadeForestClassifier from the deepforest library, with 4 forests per layer, and 100 trees per forest.
+
+Deep Forest (restricted)} was added in order to keep the size of DF comparable to DDF, by restricting the number of layers to 3 and tree depth to 10 (DF's original adaptive strategy results in much larger models).
+Deep Decision Forest uses 3 layers with 60 trees, maximum tree depth 10, and training for 70 epochs.
+
 The table below shows average accuracy ± standard deviation across several datasets:
 <img width="732" height="226" alt="Image" src="https://github.com/user-attachments/assets/ad66b71b-f4de-42b7-a2b5-036d1fce21c1" />
 

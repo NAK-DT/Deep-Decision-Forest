@@ -15,7 +15,6 @@ def get_Biased_results(worst_data, compare_list, mid_layer_check = None):
     i = 0
     for tup in worst_data:
         for item in compare_list:
-            #print("tup: ", tup[0], "item: ", item)
             if tup[0] == item[0]:
                 if tup[1] != item[1]:
                     if mid_layer_check:
@@ -32,7 +31,6 @@ def get_Biased_results(worst_data, compare_list, mid_layer_check = None):
                         if item[1] == tup[-1][-1]:
                             Biased_data.append(tup[0])
                             Biased_classes.append([item[2], item[3]])
-                            #print("Found biased point")
                             break
 
                         elif tup[1] == tup[-1][-1]:
@@ -45,16 +43,6 @@ def get_Biased_results(worst_data, compare_list, mid_layer_check = None):
         i = i + 1
 
     return Biased_data, Biased_classes
-
-'''def get_worst_data(Node, temp_list):
-    if Node.value is None:
-        temp_list = get_worst_data(Node.left, temp_list)
-        temp_list = get_worst_data(Node.right, temp_list)
-        return temp_list
-    for i in range(len(Node.data)):
-        temp_list.append([Node.data_index[i], Node.data[i], Node.value])
-    #print("Data: ", list)
-    return temp_list'''
 
 def get_worst_data(Node, data, index, temp_list, side = None, Wanted_threshold = None, Threshold = None):
 
@@ -156,7 +144,6 @@ def alternate_split(Node, data, index, temp_list, alt, side = None, Wanted_thres
 def acquire_split_nodes(node, Node_collection):
     if node.feature is not None:
         Node_collection.append(node)
-    #print(node.value)
 
     if node.left is not None:
         if node.left.value is None:
@@ -239,9 +226,6 @@ def sum_data(votes, thresholds, cap=None):
         out_targ.extend([target] * int((weight/len(thresholds))))
 
     return out_idx, out_targ
-
-
-
 
 def find_best_improvement_single(
     Layers, Data, Prev_Layer_data, current_acc,
@@ -864,7 +848,6 @@ def train_single(Layers, feature_set, Data, Change_data, include_random_trees, b
 
     prev_data_arr = np.asarray(prev_data)             # L2 outputs for L3
     y_true_all    = Data[:, -1]
-
     # config
 
     # --- build S stratified validation splits
@@ -1026,5 +1009,6 @@ def new_random_features(feature_size, samples, n_classes):
         random_features.append(rand_feat.copy())
 
     random_features = np.array(random_features).transpose()
+
 
     return random_features

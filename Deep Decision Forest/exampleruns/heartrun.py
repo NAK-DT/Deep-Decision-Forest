@@ -24,6 +24,7 @@ start = datetime.now()
 print("Start_time: ", start)
 
 heart = fetch_ucirepo(id=45)
+#preprocessing
 X = heart.data.features.copy()
 y = heart.data.targets.copy()
 
@@ -61,6 +62,7 @@ possible_classes = np.unique(train[:,-1])
 unique, counts = np.unique(data[:, -1], return_counts=True)
 train_unique, train_count = np.unique(train[:, -1], return_counts=True)
 test_unique, test_count = np.unique(test[:, -1], return_counts=True)
+#end preprocessing
 print("Class distribution:", dict(zip(unique, counts)))
 print("Class distribution (train):", dict(zip(train_unique, train_count)))
 print("Class distribution (test):", dict(zip(test_unique, test_count)))
@@ -560,3 +562,4 @@ print("End Time: ", end)
 print(f"Duration: {end - start}")
 
 print("Final done")
+

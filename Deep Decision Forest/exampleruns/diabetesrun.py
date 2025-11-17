@@ -19,7 +19,7 @@ from sklearn.datasets import load_digits
 
 start = datetime.now()
 print("Start_time: ", start)
-
+#preprocessing
 df = pd.read_csv('C:/Users/David/PycharmProjects/Examensarbete/testsets/diabetes.csv')
 if 'class' in df.columns and df.columns[-1] != 'class':
     cols = [c for c in df.columns if c != 'class'] + ['class']
@@ -40,6 +40,7 @@ possible_classes = np.unique(train[:,-1])
 unique, counts = np.unique(data[:, -1], return_counts=True)
 train_unique, train_count = np.unique(train[:, -1], return_counts=True)
 test_unique, test_count = np.unique(test[:, -1], return_counts=True)
+#end preprocessing
 print("Class distribution:", dict(zip(unique, counts)))
 print("Class distribution (train):", dict(zip(train_unique, train_count)))
 print("Class distribution (test):", dict(zip(test_unique, test_count)))
@@ -536,3 +537,4 @@ print("End Time: ", end)
 print(f"Duration: {end - start}")
 
 print("Final done")
+

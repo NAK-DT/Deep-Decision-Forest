@@ -5,7 +5,7 @@ Trees.py – Implements the DecisionTree and higher-level tree operations used i
 
 backpropagation.py – Implements the backpropagation-inspired retraining strategies. Instead of gradient descent, this module selects features (via Shapley values or exhaustive search) and retrains trees across layers to refine performance. The current heuristics that are available are SU and averageNode Depth, simply uncomment one of them in methods find_best_improvement_prop and find_best_improvement_single.
 
-modify_data.py – Provides data preprocessing and transformation utilities. Includes train/test splitting, normalization, encoding, and preparing outputs between layers in the DDF pipeline.
+modify_data.py – Provides data preprocessing and transformation utilities that the algorithm uses. Includes train/test splitting, normalization, encoding, and preparing outputs between layers in the DDF pipeline.
 
 redundancycheck.py – Contains methods to quantify redundancy in datasets using correlation- and PCA-based metrics. Produces the final redundancy score that motivates the use of DDF in redundancy-heavy datasets.
 

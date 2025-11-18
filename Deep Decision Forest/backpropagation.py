@@ -1,12 +1,9 @@
-import heapq
-import random
 from copy import deepcopy
 import numpy as np
 import Trees
-from collections import Counter, defaultdict
+from collections import Counter
 import modify_data
 import strategy
-from modify_data import print_train_score
 
 
 def get_Biased_results(worst_data, compare_list, mid_layer_check = None):
@@ -228,15 +225,13 @@ def sum_data(votes, thresholds, cap=None): #sums the preferred threshold each sa
     return out_idx, out_targ
 
 def find_best_improvement_single(
-    Layers, Data, Prev_Layer_data, current_acc,
-    include_random_trees, distribution, number_of_features,
-    maximum_tries, worst_tree, number_threshs, possible_classes, L3_sub_inds
+    Layers, Data, Prev_Layer_data, current_acc, number_of_features,
+    maximum_tries, worst_tree, AD, number_threshs, L3_sub_inds, BAG_FRAC, M_CANDIDATES, use_weights, Bootstrap
 ):
     from collections import defaultdict
     import heapq
-    from copy import deepcopy
 
-    bad_features = []
+
 
     # always-defined return fields
     accepted_count = 0
@@ -261,11 +256,15 @@ def find_best_improvement_single(
 
     while tries < maximum_tries:
         # choose a scoring strategy
-        indexed_arr, _, __, Shap = strategy.average_node_depth(
-            Existing_features, feature_split_Nodes
-        )
 
-        #indexed_arr, _, __, Shap = strategy.su_computation(feature_split_Nodes, len(Layers[-1]))
+        if AD == True:
+
+            indexed_arr, _, __, Shap = strategy.average_node_depth(
+                Existing_features, feature_split_Nodes
+            )
+        else:
+            print(len(Layers[-1]))
+            indexed_arr, _, __, Shap = strategy.su_computation(feature_split_Nodes, len(Layers[-2]))
 
         # if we have nothing to rank on, abort this try early
         if not indexed_arr:
@@ -287,12 +286,10 @@ def find_best_improvement_single(
 
             worst_features = sorted([idx for idx, _ in worst_feats])
 
-            Layers_Nodes = featCount(worst_features, feature_split_Nodes, depth=0)
+            Layers_Nodes = featCount(worst_features, feature_split_Nodes)
 
             thresholds = [(i + 1) / (number_threshs + 1) for i in range(number_threshs+1)]
             for Feat_index, Layer_Nodes in enumerate(Layers_Nodes):
-                data_indices = []
-                data_classes = []
                 votes = defaultdict(list)
 
                 for node_tuple in Layer_Nodes:
@@ -343,20 +340,17 @@ def find_best_improvement_single(
 
         # train and evaluate this single-layer modification
         temp_layers, temp_data, temp_acc, temp_feature, accepted_count, accepted_slots, single_L3_inds, single_weights = train_single(
-            Layers, worst_features, Data, Prev_Layer_data,
-            include_random_trees, retrain_indices, retrain_classes,
-            distribution, worst_tree, L3_sub_inds
+            Layers, worst_features, Data, Prev_Layer_data, retrain_indices, retrain_classes, worst_tree, L3_sub_inds, BAG_FRAC, M_CANDIDATES, Bootstrap, use_weights
         )
 
         if temp_acc - current_acc >= best_improvement:
             # refresh structures for next rounds and store best
             feature_split_Nodes, Existing_features = sortSplitNode(temp_layers, depth=0)
-            _ = featCount(worst_features, feature_split_Nodes, depth=0)  # keeps behavior, even if unused
+            _ = featCount(worst_features, feature_split_Nodes)  # keeps behavior, even if unused
 
             best_layers       = temp_layers
             best_layers_data  = temp_data
             best_accuracy     = temp_acc
-            best_improvement  = temp_acc - current_acc
             best_feature      = temp_feature
             print("found improvement shap single: ", best_feature)
             break
@@ -371,9 +365,8 @@ def find_best_improvement_single(
 
 def find_best_improvement_propagate(
     Layers, Data, current_acc, depth,
-    feat_holder, indices_holder, class_holder,
-    include_random_trees, distribution, number_of_features, featu,
-    maximum_tries, worst_tree, number_threshs, possible_classes, L3_sub_inds,
+    feat_holder, indices_holder, class_holder, number_of_features, featu,
+    maximum_tries, worst_tree, AD, number_threshs, L3_sub_inds, BAG_FRAC, M_CANDIDATES, use_weights, Bootstrap,
     Extra_indices=None, Retrain_datasets=None, old_indices=None, old_classes=None
 ): #Same as find_best_improvement_single but propagates through all layers
     from collections import defaultdict
@@ -406,11 +399,13 @@ def find_best_improvement_propagate(
     feature_split_Nodes, Existing_features = sortSplitNode(Layers, depth, featu)
 
     while tries < maximum_tries:
-        indexed_arr, biased_shapley_indices, biased_shapley_classes, Shap = strategy.average_node_depth(
-            Existing_features, feature_split_Nodes, old_indices, old_classes
-        )
 
-        #indexed_arr, biased_shapley_indices, biased_shapley_classes, Shap = strategy.su_computation(feature_split_Nodes, len(Layers[-1]), old_indices, old_classes)
+        if AD:
+            indexed_arr, biased_shapley_indices, biased_shapley_classes, Shap = strategy.average_node_depth(
+                Existing_features, feature_split_Nodes, old_indices, old_classes
+            )
+        else:
+            indexed_arr, biased_shapley_indices, biased_shapley_classes, Shap = strategy.su_computation(feature_split_Nodes, len(Layers[depth-2]), old_indices, old_classes)
 
         while retrain_indices == [] or retrain_classes == []:
             if not indexed_arr:   # nothing to pick
@@ -422,7 +417,7 @@ def find_best_improvement_propagate(
                 worst_feats = heapq.nlargest(number_of_features, indexed_arr, key=lambda x: x[1])
 
             worst_features = sorted([idx for idx, _ in worst_feats])
-            Layers_Nodes = featCount(worst_features, feature_split_Nodes, depth)
+            Layers_Nodes = featCount(worst_features, feature_split_Nodes)
 
             thresholds = [(i + 1) / (number_threshs + 1) for i in range(number_threshs+1)]
 
@@ -518,16 +513,14 @@ def find_best_improvement_propagate(
                 layers, layer_data, pot_acc, feats, accepted_count, accepted_slots, propagate_L3_inds, propagate_weights = train_propagate(
                     Layers, feat_holder, Data[0], Data[1:],
                     indices_holder, class_holder,
-                    include_random_trees, distribution,
-                    worst_tree, Retrain_datasets, Extra_indices, L3_sub_inds
+                    worst_tree, Retrain_datasets, Extra_indices, L3_sub_inds, BAG_FRAC, M_CANDIDATES, Bootstrap, use_weights
                 )
                 new_layers = deepcopy(layers)
             else: # Otherwise go to next layer
                 layers, layer_data, pot_acc, feats, accepted_count, accepted_slots, propagate_L3_inds, propagate_weights = find_best_improvement_propagate(
                     Layers, Data, current_acc, depth - 1,
-                    feat_holder, indices_holder, class_holder,
-                    include_random_trees, distribution, number_of_features,
-                    worst_features, maximum_tries, worst_tree, number_threshs, possible_classes, L3_sub_inds,
+                    feat_holder, indices_holder, class_holder, number_of_features,
+                    worst_features, maximum_tries, worst_tree, AD, number_threshs, L3_sub_inds, BAG_FRAC, M_CANDIDATES, use_weights, Bootstrap,
                     Retrain_datasets, Extra_indices, retrain_indices, retrain_classes
                 )
                 new_layers = deepcopy(layers)
@@ -580,7 +573,7 @@ def sortSplitNode(Layers, depth, featu=None): #Sort the nodes in one layer by fe
             feature_split_Nodes.append([treedex, node, node.feature])  # Store the node info
     return feature_split_Nodes, Existing_features
 
-def featCount(worst_features, feature_split_Nodes, depth):
+def featCount(worst_features, feature_split_Nodes):
     Layers_Nodes = []
     feature_count = []
 
@@ -601,8 +594,7 @@ def featCount(worst_features, feature_split_Nodes, depth):
 
 
 # Tree retraining for all layers
-def train_propagate(Old_Layers, feature, Data, Change_data, biased_data, biased_classes,
-                    include_random_trees, distribution, worst_tree, Retraining_datasets, retraining_indices, L3_sub_inds, use_weights = True):
+def train_propagate(Old_Layers, feature, Data, Change_data, biased_data, biased_classes, worst_tree, Retraining_datasets, retraining_indices, L3_sub_inds, BAG_FRAC, M_CANDIDATES, Bootstrap, use_weights = True):
 
     accepted_count = 0
     accepted_slots = []
@@ -718,8 +710,6 @@ def train_propagate(Old_Layers, feature, Data, Change_data, biased_data, biased_
         best_sub_inds = None
 
         # knobs
-        M_CANDIDATES = 50
-        BAG_FRAC = 0.63
         EPS = 0  # allow tiny no-worse changes
 
         for _ in range(M_CANDIDATES): #Train a set number of trees for each slot to increase chances of building a better tree
@@ -729,10 +719,7 @@ def train_propagate(Old_Layers, feature, Data, Change_data, biased_data, biased_
             split_idx = np.random.randint(len(val_splits)) #Creates a random unique train set for tree training
             trn_pool = val_splits[split_idx]["trn_idx"]
             bag_sz = max(1, int(len(trn_pool) * BAG_FRAC))
-            if _ >= M_CANDIDATES:
-                bag_idx = np.random.choice(trn_pool, bag_sz, replace=True)
-            else:
-                bag_idx = np.random.choice(trn_pool, size=bag_sz, replace=True)
+            bag_idx = np.random.choice(trn_pool, size=bag_sz, replace=Bootstrap)
 
             cand = Trees.DecisionTree()
             cand.train(prev_data_arr[bag_idx], True, bag_idx)
@@ -822,7 +809,7 @@ def train_propagate(Old_Layers, feature, Data, Change_data, biased_data, biased_
     return layers, ret_data, pot_acc, feature, accepted_count, accepted_slots, L3_sub_inds, final_weights
 
 #The same sort of training as train_propagate, but only for the last two layers
-def train_single(Layers, feature_set, Data, Change_data, include_random_trees, biased_data, biased_classes, distribution, worst_tree, L3_sub_inds, use_weights = True):
+def train_single(Layers, feature_set, Data, Change_data, biased_data, biased_classes, worst_tree, L3_sub_inds, BAG_FRAC, M_CANDIDATES, Bootstrap, use_weights = True):
     pot_prev_layer = Layers[0].copy()
     prev_layer_data_copy = deepcopy(Change_data[0])
     accepted_count = 0
@@ -896,21 +883,14 @@ def train_single(Layers, feature_set, Data, Change_data, include_random_trees, b
         best_sub_inds = None
 
         # knobs
-        M_CANDIDATES = 50
-        BAG_FRAC = 0.63
         EPS = 0  # allow tiny no-worse changes
 
         for _ in range(M_CANDIDATES):
             # (A) rotate which split we source training indices from to increase diversity
-            if _ >= M_CANDIDATES:
-                BAG_FRAC = 0.63
             split_idx = np.random.randint(len(val_splits))
             trn_pool = val_splits[split_idx]["trn_idx"]
             bag_sz = max(1, int(len(trn_pool) * BAG_FRAC))
-            if _ >= M_CANDIDATES:
-                bag_idx = np.random.choice(trn_pool, bag_sz, replace=True)
-            else:
-                bag_idx = np.random.choice(trn_pool, size=bag_sz, replace=True)
+            bag_idx = np.random.choice(trn_pool, size=bag_sz, replace=Bootstrap)
 
             cand = Trees.DecisionTree()
             cand.train(prev_data_arr[bag_idx], True, bag_idx)
